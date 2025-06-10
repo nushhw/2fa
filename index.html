@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>How to Generate TOTP Codes with Python</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      margin: 2rem auto;
+      max-width: 900px;
+      background: #f6f8fa;
+      color: #24292e;
+      line-height: 1.6;
+    }
+    a {
+        color: #0366d6;
+        text-decoration: none;
+    }
+
+    a:hover {
+        text-decoration: underline;
+    }
+
+    h1, h2 {
+      color: #0366d6;
+      border-bottom: 1px solid #e1e4e8;
+      padding-bottom: 0.3em;
+    }
+    pre, code { background: #efefef; padding: 0.5rem; display: block; overflow-x: auto; }
+    .step {
+      margin-bottom: 2.5rem;
+      padding: 1.25rem;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    .step4 {
+      margin-bottom: 2.5rem;
+      padding: 1.25rem;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    .note, .success, .error {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-radius: 6px;
+    }
+    .note {
+      background: #fff5b1;
+      border-left: 4px solid #e2c300;
+    }
+    .success {
+      background: #dcffe4;
+      border-left: 4px solid #28a745;
+    }
+    .error {
+      background: #ffeef0;
+      border-left: 4px solid #d73a49;
+    }
+    .tabs {
+      display: flex;
+      gap: 1rem;
+      margin: 1rem 0;
+    }
+    .tab-button {
+      background: #e1e4e8;
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+      border: 1px solid #d1d5da;
+      border-radius: 5px;
+      transition: background 0.2s;
+    }
+    .tab-button.active {
+      background: #0366d6;
+      color: white;
+      border-color: #0366d6;
+    }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    ul li, ol li {
+      margin: 0.5rem 0;
+    }
+    .tab-button:hover {
+        background: #d1d5da;
+    }
+  </style>
+  <script>
+    function showTab(tab) {
+      document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+      document.getElementById(tab + '-tab').classList.add('active');
+      document.getElementById(tab + '-content').classList.add('active');
+    }
+   
+
+updateTotpTimer();
+setInterval(updateTotpTimer, 1000);
+
+</script>
+</head>
+<body>
+  <h1>How to Generate TOTP (2FA) Codes Using Python, no phone, on computer</h1>
+    <p> By Xinyuan, a person very frustrated <a href = "https://docs.github.com/en/authentication/securing-your-account-with-two-factor-authentication-2fa/configuring-two-factor-authentication">about github 2FA.</a></p>
+    <p> Remember to save your secret setup key!</p>
+    <div class="tabs">
+    <button class="tab-button active" id="windows-tab" onclick="showTab('windows')">Windows</button>
+    <button class="tab-button" id="mac-tab" onclick="showTab('mac')">Mac</button>
+    <button class="tab-button" id="linux-tab" onclick="showTab('linux')">Linux</button>
+  </div>
+
+  <!-- WINDOWS TAB -->
+  <div class="tab-content active" id="windows-content">
+    <div class="step">
+      <h2>Step 1: Install Python</h2>
+      <p>If you don’t have Python, install it using Chocolatey in PowerShell (as Administrator if there is one):</p>
+      <pre><code>Set-ExecutionPolicy Bypass -Scope Process -Force;
+[System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072;
+iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
+choco install python</code></pre>
+      <div class="error">
+         If <code>'choco' is not recognized</code> (which is what happened to me), Chocolatey was not added to your PATH. Reboot or add <code>C:\ProgramData\chocolatey\bin</code> to your system PATH manually.
+      </div>
+    </div>
+
+    <div class="step">
+      <h2>Step 2: Install pyotp</h2>
+      <pre><code>pip install pyotp</code></pre>
+      <div class="note">
+        If you get <code>'pip' is not recognized</code>, try:
+        <pre><code>python -m pip install pyotp</code></pre>
+        or ensure pip was installed using:
+        <pre><code>python -m ensurepip</code></pre>
+      </div>
+    </div>
+
+    <div class="step">
+      <h2>Step 3: Detect MSYS2 Environment</h2>
+      <p>You're likely using MSYS2 if your terminal says something like:</p>
+      <pre><code>abc@xyz UCRT64 ~</code></pre>
+      <p>or starts with <code>MSYS</code>, <code>MINGW64</code>, <code>UCRT64</code>, etc.</p>
+      <div class="note">
+        <strong>MSYS2 Python Setup:</strong>
+        <ol>
+          <li>Update packages:</li>
+          <pre><code>pacman -Syu</code></pre>
+          <li>Install pip:</li>
+          <pre><code>pacman -S python-pip</code></pre>
+          <li>Create and activate a virtual environment:</li>
+          <pre><code>python -m venv venv
+source venv/bin/activate
+pip install pyotp</code></pre>
+        </ol>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAC TAB -->
+  <div class="tab-content" id="mac-content">
+    <div class="step">
+      <h2>Step 1: Install Python via Homebrew</h2>
+      <pre><code>brew install python</code></pre>
+    </div>
+    <div class="step">
+      <h2>Step 2: Install pyotp</h2>
+      <pre><code>pip3 install pyotp</code></pre>
+    </div>
+  </div>
+
+  <!-- LINUX TAB -->
+  <div class="tab-content" id="linux-content">
+    <div class="step">
+      <h2>Step 1: Install Python & pip</h2>
+      <pre><code>sudo apt update
+sudo apt install python3 python3-pip</code></pre>
+    </div>
+    <div class="step">
+      <h2>Step 2: Install pyotp</h2>
+      <pre><code>pip3 install pyotp</code></pre>
+    </div>
+  </div>
+
+  <div class="step4">
+  <h2>Step 4: Create the TOTP Script</h2>
+  <p>Open your terminal and navigate to the folder where you want to create the script. Then run:</p>
+  <pre><code>nano totp.py</code></pre>
+  <p>Paste the following code:</p>
+  <pre><code>import pyotp
+totp = pyotp.TOTP("[setup key given by github]")
+print("Your TOTP code is:", totp.now())</code></pre>
+  <p>Then do the following:</p>
+  <ul>
+    <li>Press <code>Ctrl + O</code> to save the file</li>
+    <li>Press <code>Enter</code> to confirm the filename</li>
+    <li>Press <code>Ctrl + X</code> to exit the editor</li>
+  </ul>
+  <p>Now run the script to generate a TOTP code:</p>
+  <pre><code>python totp.py</code></pre>
+  <p>You should see a 6-digit code printed. This is your time-based one-time password.</p>
+</div>
+
+<div class="step">
+    <h2>Step 5: Ensure Correct System Time</h2>
+    <p>To check how many seconds your clock is out of sync, visit <a href="https://time.is" target="_blank">this link.</a></p>
+
+    <ul>
+        
+      <li><strong>Windows:</strong> Settings > Time & Language > Enable "Set time automatically" > Click "Sync Now"</li>
+      <li><strong>Mac:</strong> System Preferences > Date & Time > Enable network time</li>
+      <li><strong>Linux:</strong> <code>timedatectl set-ntp true</code></li>
+    </ul>
+    <div class="error">
+      If the TOTP code is correct but login fails, your system clock may be out of sync.
+    </div>
+  </div>
+
+  <div class="success">
+    <strong>Login Process:</strong>
+    <ol>
+      <li> Activate your virtual environment if you used a <code>venv</code>. For Linux/MacOS/MSYS2: <code>source venv/bin/activate</code>, and for Windows CMD/PowerShell: <code>.\\venv\\Scripts\\activate</code> If it doesn't work and there is an error message, try typing <code>ls</code> to check if there is a python file called <code>totp.py</code>. If there isn't, you can create another one (see step 4) </li>
+      <li>Run <code>python totp.py</code></li>
+      <li>Copy the 6-digit code shown</li>
+      <li>Enter it in your 2FA login prompt within 30 seconds</li>
+    </ol>
+  </div>
+</body>
+</html>
